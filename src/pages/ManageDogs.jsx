@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { PlusCircle, Edit, Trash2, UploadCloud, X, Loader2 } from 'lucide-react';
 import Loader from '@/components/Loader';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
@@ -28,6 +29,7 @@ const ManageDogs = () => {
   const [sex, setSex] = useState('');
   const [status, setStatus] = useState('');
   const [description, setDescription] = useState('');
+  const [isFeatured, setIsFeatured] = useState(false);
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
 
@@ -65,6 +67,7 @@ const ManageDogs = () => {
     setSex('');
     setStatus('');
     setDescription('');
+    setIsFeatured(false);
     setImageFiles([]);
     setImagePreviews([]);
     setEditingDog(null);
@@ -128,6 +131,7 @@ const ManageDogs = () => {
             sex,
             status,
             description,
+            is_featured: isFeatured,
             image_urls: [...existingImageUrls, ...newImageUrls]
         };
 
@@ -165,6 +169,7 @@ const ManageDogs = () => {
     setSex(dog.sex);
     setStatus(dog.status);
     setDescription(dog.description || '');
+    setIsFeatured(dog.is_featured || false);
     setImagePreviews(dog.image_urls || []);
     setImageFiles([]);
     setIsDialogOpen(true);
@@ -292,6 +297,10 @@ const ManageDogs = () => {
                           <img src={dog.image_urls[0]} alt={dog.name} className="h-full w-full object-cover" />
                       ) : <div className="h-full w-full bg-accent"></div>}
                   </div>
+                   <div className="flex items-center space-x-2">
+                     <Switch id="featured" checked={isFeatured} onCheckedChange={setIsFeatured} />
+                     <Label htmlFor="featured">Destacar na página inicial</Label>
+                   </div>
                   <CardHeader>
                     <CardTitle>{dog.name}</CardTitle>
                     <CardDescription>{dog.breed}</CardDescription>
@@ -305,6 +314,11 @@ const ManageDogs = () => {
                         {dog.status}
                       </span>
                     </p>
+                    {dog.is_featured && (
+                      <p className="text-sm">
+                        <span className="font-semibold text-primary">⭐ Em destaque na home</span>
+                      </p>
+                    )}
                   </CardContent>
                   <CardFooter>
                     <div className="flex w-full justify-end space-x-2">

@@ -1,12 +1,52 @@
 import React from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, Users, Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/lib/customSupabaseClient';
+import Loader from '@/components/Loader';
 
 const Home = () => {
+  const [featuredDogs, setFeaturedDogs] = useState([]);
+  const [loadingFeatured, setLoadingFeatured] = useState(true);
+
+  useEffect(() => {
+    const fetchFeaturedDogs = async () => {
+      setLoadingFeatured(true);
+      
+      // Primeiro tenta buscar cães marcados como destaque
+      let { data: featured, error } = await supabase
+        .from('dogs')
+        .select('*')
+        .eq('is_featured', true)
+        .order('created_at', { ascending: false })
+        .limit(4);
+
+      // Se não houver cães em destaque, pega os 4 primeiros cadastrados
+      if (!error && (!featured || featured.length === 0)) {
+        const { data: firstDogs, error: firstError } = await supabase
+          .from('dogs')
+          .select('*')
+          .order('created_at', { ascending: true })
+          .limit(4);
+        
+        if (!firstError) {
+          featured = firstDogs;
+        }
+      }
+
+      if (!error) {
+        setFeaturedDogs(featured || []);
+      }
+      setLoadingFeatured(false);
+    };
+
+    fetchFeaturedDogs();
+  }, []);
+
   const stats = [
     { number: '5+', label: 'Anos de Experiência' }, 
     { number: '30+', label: 'Clientes Satisfeitos' }, 
@@ -90,41 +130,59 @@ const Home = () => {
             <h2 className="text-4xl md:text-5xl font-serif text-foreground mb-4">Nossos Destaques</h2>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">Conheça alguns dos nossos exemplares mais especiais.</p>
           </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, once: true }}>
-              <Card className="card-hover overflow-hidden bg-card group">
-                <div className="overflow-hidden">
-                   <img className="w-full h-96 object-cover group-hover:scale-105 transition-transform duration-500" alt="Thor - American Bully Micro" src="https://images.unsplash.com/photo-1686926456113-9f5c4ba317d8?q=80&w=2574&auto=format&fit=crop" />
-                </div>
-                <CardHeader>
-                  <CardTitle className="text-2xl">Thor</CardTitle>
-                  <p className="text-base text-muted-foreground">American Bully Micro</p>
-                </CardHeader>
-              </Card>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1, once: true }}>
-              <Card className="card-hover overflow-hidden bg-card group">
-                <div className="overflow-hidden">
-                    <img className="w-full h-96 object-cover group-hover:scale-105 transition-transform duration-500" alt="Luna - Bulldog Francês Fluffy" src="https://images.unsplash.com/photo-1605812277044-fc0922bfa659?q=80&w=2574&auto=format&fit=crop" />
-                </div>
-                <CardHeader>
-                  <CardTitle className="text-2xl">Luna</CardTitle>
-                  <p className="text-base text-muted-foreground">Bulldog Francês Fluffy</p>
-                </CardHeader>
-              </Card>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2, once: true }}>
-              <Card className="card-hover overflow-hidden bg-card group">
-                <div className="overflow-hidden">
-                    <img className="w-full h-96 object-cover group-hover:scale-105 transition-transform duration-500" alt="Zeus - Exotic Bully Fluffy" src="https://images.unsplash.com/photo-1687279660176-b05823a3b1cf?q=80&w=2574&auto=format&fit=crop" />
-                </div>
-                <CardHeader>
-                  <CardTitle className="text-2xl">Zeus</CardTitle>
-                  <p className="text-base text-muted-foreground">Exotic Bully Fluffy</p>
-                </CardHeader>
-              </Card>
-            </motion.div>
-          </div>
+          
+          {loadingFeatured ? (
+            <Loader text="Carregando destaques..." />
+          ) : featuredDogs.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {featuredDogs.map((dog, index) => (
+                <motion.div 
+                  key={dog.id} 
+                  initial={{ opacity: 0, y: 20 }} 
+                  whileInView={{ opacity: 1, y: 0 }} 
+                  transition={{ duration: 0.6, delay: index * 0.1, once: true }}
+                >
+                  <Card className="card-hover overflow-hidden bg-card group h-full">
+                    <div className="overflow-hidden relative">
+                      <img 
+                        className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-500" 
+                        alt={`${dog.name} - ${dog.breed}`} 
+                        src={dog.image_urls?.[0] || 'https://placehold.co/400x320/FFF0D5/4C4A48?text=Sem+Foto'} 
+                      />
+                      <div className="absolute top-4 right-4">
+                        <span className={`status-badge status-${dog.status.toLowerCase().replace(/\s/g, '-')}`}>
+                          {dog.status}
+                        </span>
+                      </div>
+                    </div>
+                    <CardHeader>
+                      <CardTitle className="text-xl">{dog.name}</CardTitle>
+                      <p className="text-base text-muted-foreground">{dog.breed}</p>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <Button asChild className="w-full" size="sm">
+                        <a 
+                          href={`https://wa.me/5516997962312?text=Olá! Gostaria de saber mais sobre o ${dog.name} (${dog.breed}).`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                        >
+                          Mais Informações
+                        </a>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <p className="text-lg text-muted-foreground mb-4">Nenhum cão cadastrado ainda.</p>
+              <Button asChild>
+                <Link to="/galeria">Ver Galeria Completa</Link>
+              </Button>
+            </div>
+          )}
+          
           <div className="text-center mt-20">
             <Button asChild>
               <Link to="/galeria">Ver Galeria Completa</Link>
