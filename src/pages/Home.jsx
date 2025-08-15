@@ -17,26 +17,13 @@ const Home = () => {
     const fetchFeaturedDogs = async () => {
       setLoadingFeatured(true);
       
-      // Primeiro tenta buscar cães marcados como destaque
-      let { data: featured, error } = await supabase
+      // Busca apenas cães marcados como destaque
+      const { data: featured, error } = await supabase
         .from('dogs')
         .select('*')
         .eq('is_featured', true)
         .order('created_at', { ascending: false })
         .limit(4);
-
-      // Se não houver cães em destaque, pega os 4 primeiros cadastrados
-      if (!error && (!featured || featured.length === 0)) {
-        const { data: firstDogs, error: firstError } = await supabase
-          .from('dogs')
-          .select('*')
-          .order('created_at', { ascending: true })
-          .limit(4);
-        
-        if (!firstError) {
-          featured = firstDogs;
-        }
-      }
 
       if (!error) {
         setFeaturedDogs(featured || []);
