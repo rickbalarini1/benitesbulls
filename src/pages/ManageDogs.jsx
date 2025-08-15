@@ -131,7 +131,6 @@ const ManageDogs = () => {
             sex,
             status,
             description,
-            is_featured: isFeatured,
             image_urls: [...existingImageUrls, ...newImageUrls]
         };
 
@@ -169,7 +168,6 @@ const ManageDogs = () => {
     setSex(dog.sex);
     setStatus(dog.status);
     setDescription(dog.description || '');
-    setIsFeatured(dog.is_featured || false);
     setImagePreviews(dog.image_urls || []);
     setImageFiles([]);
     setIsDialogOpen(true);
@@ -271,10 +269,6 @@ const ManageDogs = () => {
                                           <X className="h-3 w-3" />
                                       </button>
                                   </div>
-                              ))}
-                          </div>
-                      )}
-                   </div>
                    <DialogFooter>
                       <DialogClose asChild><Button type="button" variant="outline">Cancelar</Button></DialogClose>
                       <Button type="submit" disabled={isSubmitting}>
@@ -314,11 +308,6 @@ const ManageDogs = () => {
                         {dog.status}
                       </span>
                     </p>
-                    {dog.is_featured && (
-                      <p className="text-sm">
-                        <span className="font-semibold text-primary">⭐ Em destaque na home</span>
-                      </p>
-                    )}
                   </CardContent>
                   <CardFooter>
                     <div className="flex w-full justify-end space-x-2">

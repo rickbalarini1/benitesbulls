@@ -17,11 +17,10 @@ const Home = () => {
     const fetchFeaturedDogs = async () => {
       setLoadingFeatured(true);
       
-      // Busca apenas cães marcados como destaque
+      // Busca os primeiros 4 cães cadastrados (fallback enquanto is_featured não existe)
       const { data: featured, error } = await supabase
         .from('dogs')
         .select('*')
-        .eq('is_featured', true)
         .order('created_at', { ascending: false })
         .limit(4);
 
